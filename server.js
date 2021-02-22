@@ -16,6 +16,10 @@ const server = express();
 // to tell (PORT) to get data inside .env file
 const PORT = process.env.PORT_env || 3030 ;
 
+//location link   pk.d634ea20f4144b59e97ee98ebf489a1d
+//API LINK        df13e4e00db44a7a93160cc6e4eb03d2
+
+
 //handling location
 server.get('/location' , (req ,res )=>{
     //get data from location file
@@ -36,18 +40,10 @@ function Location (locationData){
 
 server.get('/weather' ,(req ,res)=>{
     const weData = require ('./data/weather.json');
-    let weatherArr = [];
-    
-    weData.data.forEach(element => {
-        // console.log(element.weather.description);
-        // console.log(element.datetime);
-        
-        const weathData = new Weather(element.weather.description ,element.datetime ) ;
-        weatherArr.push(weathData);
-        // console.log(weathData);
+
+    let weatherArr = weData.data.map(element => {
+       return new Weather(element.weather.description ,element.datetime ) ;
     });
-    // console.log(weatherArr);
-    
     res.send(weatherArr);
 })
 
