@@ -1,20 +1,30 @@
 'use strict';
+
+//get library
 const express = require ('express');
+
+//install .env
 require('dotenv').config();
+//get cors
 const cors =require('cors');
-
-
-const server = express();
+//use cors
 server.use(cors());
+
+//get package (express) from node_module inside (server)
+const server = express();
+
+// to tell (PORT) to get data inside .env file
 const PORT = process.env.PORT_env || 3030 ;
 
-
+//handling location
 server.get('/location' , (req ,res )=>{
+    //get data from location file
     const locData = require('./data/location.json');
-    
+    //create location object
     const locObj = new Location(locData);
+
+    //send data to front-end
     res.send(locObj);
-    
 })
 
 function Location (locationData){
@@ -51,5 +61,4 @@ res.status(500).send('Sorry, something went wrong')
 
 server.listen(PORT, () =>{
     console.log(`listening on PORT ${PORT}`);
-    
 })
