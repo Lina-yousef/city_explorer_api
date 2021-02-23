@@ -2,6 +2,8 @@
 
 //get library
 const express = require ('express');
+//get package (express) from node_module inside (server)
+const server = express();
 
 //get package (express) from node_module inside (server)
 const server = express();
@@ -13,6 +15,9 @@ const cors =require('cors');
 server.use(cors());
 
 
+const pg =require('pg');
+const client = new pg.Client(process.env.DATABASE_URL);
+
 // to tell (PORT) to get data inside .env file
 const PORT = process.env.PORT_env || 3030 ;
 const superagent = require('superagent');
@@ -21,11 +26,26 @@ const superagent = require('superagent');
 server.get('/location',locationHandler);
 server.get('/weather',weatherHandler);
 server.get('/parks',parksHandler);
+server.get('/try',tryHandler);
 server.get('/',handleHomeRoute);
 server.use('*',notFoundRouteHandler);
 server.use(handleError);
 
+
+function tryHandler (req , res){
+
+    let SQL = `SELECT * FROM locations;`;
+    client.query(SQL)
+    .then(results =>{
+        // console.log(results);
+        res.send(results.rows);
+    })
+}
+
+
+
 //handling location
+
 function locationHandler (req ,res ){
     // console.log(req.query.city);
     let cityName = req.query.city;
@@ -34,19 +54,60 @@ function locationHandler (req ,res ){
     let key = process.env.LOCATION_KEY;
     let url = `https://eu1.locationiq.com/v1/search.php?key=${key}&q=${cityName}&format=json`;
 
-    superagent.get(url)
-    .then(locData=>{
-        // console.log(locData.body[0]);
-        //create location object
-        const locObj = new Location(cityName,locData.body);
-        // console.log(locObj);
-        //send data to front-end
-        res.send(locObj);
+    let SQL = `SELECT * FROM locations;`;
+    let SQL2 =`SELECT * FROM locations WHERE search_query=$1;`;
+    let arrSQL =[];
+
+    client.query(SQL)
+    .then(result =>{
+        if(result.rows.length <= 0 ){
+            superagent.get(url)
+            .then((locData)=>{
+                console.log('From API');
+                const locObj = new Location(cityName,locData.body);
+                setToDB(locObj);
+                res.send(locObj);
+            })
+        }else {
+            arrSQL = [cityName];
+            client.query(SQL2 , arrSQL)
+            .then(result =>{
+                if(result.rows.length <= 0){
+                    // console.log(`From the other side`);
+                    superagent.get(url)
+                    .then((locData2)=>{
+                    const locObj = new Location(cityName,locData2.body);
+                    setToDB(locObj);
+                    res.send(locObj);
+                    })
+                }else {
+                    console.log(`From DB`);
+                    res.send(result.rows[0]);
+                }
+            })
+        
+    }
     })
     .catch(()=>{
         handleError('Error in getting data from locationiq',req,res);
     })
 }
+
+function setToDB (obj) {
+
+    let insertSQL = `INSERT INTO locations (search_query,formatted_query,latitude,longitude) VALUES ($1,$2,$3,$4);`;
+    let safeValues = [
+        obj.search_query,
+        obj.formatted_query,
+        obj.latitude,
+        obj.longtude,
+    ];
+    client.query(insertSQL, safeValues)
+    .then(() => {
+        console.log('storing data in database');
+    });
+}
+
 function Location (search_query,locationData){
     this.search_query= search_query;
     this.formatted_query=locationData[0].display_name;
@@ -106,8 +167,6 @@ function parksHandler(req,res){
         handleError('Error in getting data from locationiq',req,res);
     })
 }
-
-
 function handleHomeRoute(req,res){
  res.send('Home route');
 }
@@ -124,6 +183,9 @@ function handleError(error , req , res){
 
 }
 
-server.listen(PORT, () =>{
-    console.log(`listening on PORT ${PORT}`);
+client.connect()
+.then(()=>{
+    server.listen(PORT, () =>
+    console.log(`listening on ${PORT}`)
+    );
 })
