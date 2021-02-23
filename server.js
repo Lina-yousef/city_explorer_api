@@ -2,6 +2,8 @@
 
 //get library
 const express = require ('express');
+//get package (express) from node_module inside (server)
+const server = express();
 
 //install .env
 require('dotenv').config();
@@ -10,8 +12,9 @@ const cors =require('cors');
 //use cors
 server.use(cors());
 
-//get package (express) from node_module inside (server)
-const server = express();
+
+const pg =require('pg');
+const client = new pg.Client(process.env.DATABASE_URL);
 
 // to tell (PORT) to get data inside .env file
 const PORT = process.env.PORT_env || 3030 ;
@@ -22,6 +25,8 @@ server.get('/location' , (req ,res )=>{
     const locData = require('./data/location.json');
     //create location object
     const locObj = new Location(locData);
+
+    
 
     //send data to front-end
     res.send(locObj);
@@ -59,6 +64,9 @@ server.use('*',(req , res)=>{
 res.status(500).send('Sorry, something went wrong')
 })
 
-server.listen(PORT, () =>{
-    console.log(`listening on PORT ${PORT}`);
+client.connect()
+.then(()=>{
+    server.listen(PORT, () =>
+    console.log(`listening on ${PORT}`)
+    );
 })
