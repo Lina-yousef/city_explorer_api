@@ -5,6 +5,8 @@ const express = require ('express');
 //get package (express) from node_module inside (server)
 const server = express();
 
+//get package (express) from node_module inside (server)
+const server = express();
 //install .env
 require('dotenv').config();
 //get cors
@@ -85,12 +87,12 @@ function locationHandler (req ,res ){
             })
         
     }
- 
     })
     .catch(()=>{
         handleError('Error in getting data from locationiq',req,res);
     })
 }
+
 function setToDB (obj) {
 
     let insertSQL = `INSERT INTO locations (search_query,formatted_query,latitude,longitude) VALUES ($1,$2,$3,$4);`;
@@ -178,6 +180,7 @@ function handleError(error , req , res){
         responseText :'Sorry, something went wrong'
     }
     res.status(500).send(errObj);
+
 }
 
 client.connect()
