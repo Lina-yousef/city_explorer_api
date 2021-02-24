@@ -5,8 +5,6 @@ const express = require ('express');
 //get package (express) from node_module inside (server)
 const server = express();
 
-//get package (express) from node_module inside (server)
-const server = express();
 //install .env
 require('dotenv').config();
 //get cors
@@ -26,6 +24,8 @@ const superagent = require('superagent');
 server.get('/location',locationHandler);
 server.get('/weather',weatherHandler);
 server.get('/parks',parksHandler);
+server.get('/movie',movieHandler);
+server.get('/yelp',yelpHandling);
 server.get('/try',tryHandler);
 server.get('/',handleHomeRoute);
 server.use('*',notFoundRouteHandler);
@@ -41,8 +41,6 @@ function tryHandler (req , res){
         res.send(results.rows);
     })
 }
-
-
 
 //handling location
 
@@ -114,6 +112,15 @@ function Location (search_query,locationData){
     this.latitude = locationData[0].lat;
     this.longtude = locationData[0].lon;
 }
+function Movie (){
+    this.title=title;
+    this.overview=overview;
+    this.average_votes=average_votes;
+    this.total_votes=total_votes;
+    this.image_url=image_url;
+    this.popularity=popularity;
+    this.released_on=released_on;
+}
 function Weather (description ,datetime){
     this.forecast = description ;
     this.time = datetime;
@@ -140,6 +147,49 @@ function weatherHandler(req ,res){
            handleError('Error in getting data from locationiq',req,res);
     })
 }
+
+// Movie Handling 
+function movieHandler (req,res){
+    let movie=req.query;
+    let key=process.env.MOVIE_KEY;
+    let url =``;
+
+    superagent.get(url)
+    .then(movieArr =>{
+        let movieData = movieArr.body.map(element =>{
+            return new Movie(element);
+        });
+        res.send(movieData);
+    })
+     .catch(()=>{
+           handleError('Error in getting data from locationiq',req,res);
+    })
+}
+function yelpHandling (req,res){
+    let city=req.query.search_query;
+    const page =req.query.page;
+    getYelp(city,page)
+    .then(yelpData =>{
+        req.status(200).json(yelpData);
+    });
+
+}
+
+function getYelp (city,page){
+    let key = process.env.YELP_KEY;
+    const numPerPage = 2;
+    const start =((page - 1) * numPerPage + 1);
+    const url =`https://api.yelp.com/v3/businesses/search?location=${city}&limit=${numPerPage}&offset=${start}`;
+}
+function Yelp (){
+    this.name=name;
+    this.image_url=image_url;
+    this.price=price;
+    this.rating=rating;
+    this.url=url;
+}
+
+// park Handling
 function Parks (element){
 
     this.name = element.fullName;
