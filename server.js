@@ -112,28 +112,19 @@ function Location (search_query,locationData){
     this.latitude = locationData[0].lat;
     this.longtude = locationData[0].lon;
 }
-function Movie (){
-    this.title=title;
-    this.overview=overview;
-    this.average_votes=average_votes;
-    this.total_votes=total_votes;
-    this.image_url=image_url;
-    this.popularity=popularity;
-    this.released_on=released_on;
-}
 function Weather (description ,datetime){
     this.forecast = description ;
     this.time = datetime;
 }
 
 function weatherHandler(req ,res){
-
+    
     // console.log(req.query.search_query);
     let weath =req.query.search_query;
     
     let key = process.env.WEATHER_KEY;
     let url = `https://api.weatherbit.io/v2.0/forecast/daily?city=${weath}&key=${key}`;
-
+    
     superagent.get(url)
     .then(weatherArr =>{
         
@@ -143,50 +134,72 @@ function weatherHandler(req ,res){
         // console.log(weatherData);
         res.send(weatherData);
     })
-       .catch(()=>{
-           handleError('Error in getting data from locationiq',req,res);
+    .catch(()=>{
+        handleError('Error in getting data from locationiq',req,res);
     })
 }
 
-// Movie Handling 
+// Movie Handling
 function movieHandler (req,res){
-    let movie=req.query;
+    //https://api.themoviedb.org/3/movie/550?api_key=bc5ec481edc848bb2e491e2d1dcc3f61
+    
+    // let movie=req.query;
     let key=process.env.MOVIE_KEY;
-    let url =``;
+    let url =`https://api.themoviedb.org/3/movie/550?api_key=${key}`;
 
     superagent.get(url)
     .then(movieArr =>{
-        let movieData = movieArr.body.map(element =>{
+        let movieData = movieArr.body.results.map(element =>{
             return new Movie(element);
         });
         res.send(movieData);
     })
-     .catch(()=>{
-           handleError('Error in getting data from locationiq',req,res);
+    // console.log(movieArr.body.results);
+    .catch(()=>{
+        handleError('Error in getting data from locationiq',req,res);
     })
 }
-function yelpHandling (req,res){
-    let city=req.query.search_query;
-    const page =req.query.page;
-    getYelp(city,page)
-    .then(yelpData =>{
-        req.status(200).json(yelpData);
-    });
-
+function Movie (data){
+    this.title =data.title ;
+    this.overview = data.overview;
+    this.average_votes =data.vote_average;
+    this.total_votes = data.vote_count;
+    this.image_url = `https://image.tmdb.org/t/p/w500${data.backdrop_path}`;
+    this.popularity = data.popularity;
+    this.released_on =data.release_date;
 }
 
-function getYelp (city,page){
-    let key = process.env.YELP_KEY;
-    const numPerPage = 2;
-    const start =((page - 1) * numPerPage + 1);
-    const url =`https://api.yelp.com/v3/businesses/search?location=${city}&limit=${numPerPage}&offset=${start}`;
-}
-function Yelp (){
-    this.name=name;
-    this.image_url=image_url;
-    this.price=price;
-    this.rating=rating;
-    this.url=url;
+ function yelpHandling (req,res){
+    //https://api.yelp.com/v3/businesses/search
+     
+     let key = process.env.YELP_KEY;
+     let city=req.query.search_query;
+
+     const page =req.query.page;
+     const numPerPage = 5;
+     const start =((page - 1) * numPerPage + 1);
+     
+     const url =`https://api.yelp.com/v3/businesses/search?location=${city}&limit=${numPerPage}&offset=${start}`;
+     
+     superagent(url)
+     .set('Authorization', `Bearer ${key}`)
+        .then(yelpArr =>{
+            let yelpData = yelpArr.body.businesses.map(element =>{
+                return new Yelp (element);
+            })
+            res.send(yelpData);
+        })
+        .catch(()=>{
+        handleError('Error in getting data from locationiq',req,res);
+    })
+    }
+   
+function Yelp (data){
+    this.name=data.name;
+    this.image_url=data.image_url;
+    this.price=data.price;
+    this.rating=data.rating;
+    this.url=data.url;
 }
 
 // park Handling
