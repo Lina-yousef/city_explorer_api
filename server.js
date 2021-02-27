@@ -14,8 +14,8 @@ server.use(cors());
 
 
 const pg =require('pg');
-const client = new pg.Client(process.env.DATABASE_URL);
-
+// const client = new pg.Client(process.env.DATABASE_URL);
+const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
 // to tell (PORT) to get data inside .env file
 const PORT = process.env.PORT_env || 3030 ;
 const superagent = require('superagent');
@@ -46,7 +46,7 @@ function tryHandler (req , res){
 
 function locationHandler (req ,res ){
     // console.log(req.query.city);
-    let cityName = req.query.city;
+    let cityName = req.query.search_query;
     
     //location url & keyword
     let key = process.env.LOCATION_KEY;
