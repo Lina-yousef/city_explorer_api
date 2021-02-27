@@ -4,9 +4,6 @@
 const express = require ('express');
 //get package (express) from node_module inside (server)
 const server = express();
-
-//get package (express) from node_module inside (server)
-const server = express();
 //install .env
 require('dotenv').config();
 //get cors
@@ -150,10 +147,10 @@ function Parks (element){
 }
 function parksHandler(req,res){
     // console.log(req.query.latitude+','+req.query.longtude);
-    let park = req.query.latitude+','+req.query.longtude;
+    let park = req.query.search_query;
 
     let key = process.env.PARK_KEY;
-    let url = `https://developer.nps.gov/api/v1/parks?parkCode=${park}&api_key=${key}`;
+    let url = `https://developer.nps.gov/api/v1/parks?q=${park}&api_key=${key}`;
     
     superagent.get(url)
     .then(park =>{
