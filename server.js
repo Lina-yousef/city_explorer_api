@@ -14,8 +14,8 @@ server.use(cors());
 
 
 const pg =require('pg');
-const client = new pg.Client(process.env.DATABASE_URL);
-
+// const client = new pg.Client(process.env.DATABASE_URL);
+const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
 // to tell (PORT) to get data inside .env file
 const PORT = process.env.PORT_env || 3030 ;
 const superagent = require('superagent');
@@ -24,7 +24,7 @@ const superagent = require('superagent');
 server.get('/location',locationHandler);
 server.get('/weather',weatherHandler);
 server.get('/parks',parksHandler);
-server.get('/movie',movieHandler);
+server.get('/movies',movieHandler);
 server.get('/yelp',yelpHandling);
 server.get('/try',tryHandler);
 server.get('/',handleHomeRoute);
@@ -46,7 +46,7 @@ function tryHandler (req , res){
 
 function locationHandler (req ,res ){
     // console.log(req.query.city);
-    let cityName = req.query.city;
+    let cityName = req.query.search_query;
     
     //location url & keyword
     let key = process.env.LOCATION_KEY;
@@ -143,18 +143,18 @@ function weatherHandler(req ,res){
 function movieHandler (req,res){
     //https://api.themoviedb.org/3/movie/550?api_key=bc5ec481edc848bb2e491e2d1dcc3f61
     
-    // let movie=req.query;
+    let city=req.query.search_query;
     let key=process.env.MOVIE_KEY;
-    let url =`https://api.themoviedb.org/3/movie/550?api_key=${key}`;
-
+    let url = `https://api.themoviedb.org/3/search/multi?api_key=${key}&query=${city}`;
+console.log(req.query.search_query);
     superagent.get(url)
     .then(movieArr =>{
         let movieData = movieArr.body.results.map(element =>{
             return new Movie(element);
         });
         res.send(movieData);
+        // console.log(movieArr.body);
     })
-    // console.log(movieArr.body.results);
     .catch(()=>{
         handleError('Error in getting data from locationiq',req,res);
     })
@@ -164,7 +164,7 @@ function Movie (data){
     this.overview = data.overview;
     this.average_votes =data.vote_average;
     this.total_votes = data.vote_count;
-    this.image_url = `https://image.tmdb.org/t/p/w500${data.backdrop_path}`;
+    this.image_url = `https://image.tmdb.org/t/p/w500${data.poster_path}`;
     this.popularity = data.popularity;
     this.released_on =data.release_date;
 }
@@ -223,7 +223,8 @@ function parksHandler(req,res){
         // console.log(park.body);
         let parkData = park.body.data.map(element =>{
             return new Parks(element);
-        });console.log(parkData);
+        });
+        // console.log(parkData);
         res.send(parkData);
     })
      .catch(()=>{
