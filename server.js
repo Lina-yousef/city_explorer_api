@@ -24,7 +24,7 @@ const superagent = require('superagent');
 server.get('/location',locationHandler);
 server.get('/weather',weatherHandler);
 server.get('/parks',parksHandler);
-server.get('/movie',movieHandler);
+server.get('/movies',movieHandler);
 server.get('/yelp',yelpHandling);
 server.get('/try',tryHandler);
 server.get('/',handleHomeRoute);
@@ -143,18 +143,18 @@ function weatherHandler(req ,res){
 function movieHandler (req,res){
     //https://api.themoviedb.org/3/movie/550?api_key=bc5ec481edc848bb2e491e2d1dcc3f61
     
-    // let movie=req.query;
+    let city=req.query.search_query;
     let key=process.env.MOVIE_KEY;
-    let url =`https://api.themoviedb.org/3/movie/550?api_key=${key}`;
-
+    let url = `https://api.themoviedb.org/3/search/multi?api_key=${key}&query=${city}`;
+console.log(req.query.search_query);
     superagent.get(url)
     .then(movieArr =>{
         let movieData = movieArr.body.results.map(element =>{
             return new Movie(element);
         });
         res.send(movieData);
+        // console.log(movieArr.body);
     })
-    // console.log(movieArr.body.results);
     .catch(()=>{
         handleError('Error in getting data from locationiq',req,res);
     })
@@ -164,7 +164,7 @@ function Movie (data){
     this.overview = data.overview;
     this.average_votes =data.vote_average;
     this.total_votes = data.vote_count;
-    this.image_url = `https://image.tmdb.org/t/p/w500${data.backdrop_path}`;
+    this.image_url = `https://image.tmdb.org/t/p/w500${data.poster_path}`;
     this.popularity = data.popularity;
     this.released_on =data.release_date;
 }
@@ -213,17 +213,18 @@ function Parks (element){
 }
 function parksHandler(req,res){
     // console.log(req.query.latitude+','+req.query.longtude);
-    let park = req.query.latitude+','+req.query.longtude;
+    let park = req.query.search_query;
 
     let key = process.env.PARK_KEY;
-    let url = `https://developer.nps.gov/api/v1/parks?parkCode=${park}&api_key=${key}`;
+    let url = `https://developer.nps.gov/api/v1/parks?q=${park}&api_key=${key}`;
     
     superagent.get(url)
     .then(park =>{
         // console.log(park.body);
         let parkData = park.body.data.map(element =>{
             return new Parks(element);
-        });console.log(parkData);
+        });
+        // console.log(parkData);
         res.send(parkData);
     })
      .catch(()=>{
